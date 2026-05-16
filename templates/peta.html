@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Pemetaan Cluster{% endblock %}
+{% block page_title %}Pemetaan Cluster Kecamatan{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <!-- Map -->
+  <div class="col-lg-9">
+    <div class="section-card p-0" style="overflow:hidden">
+      <div id="map" style="height:600px;width:100%"></div>
+    </div>
+  </div>
+
+  <!-- Legend & Table -->
+  <div class="col-lg-3">
+    <div class="section-card mb-3">
+      <div class="section-title"><i class="bi bi-palette me-2"></i>Legend</div>
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:20px;height:20px;background:#dc2626;border-radius:4px"></div>
+          <span class="fw-semibold" style="font-size:.85rem">Intensitas Tinggi</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:20px;height:20px;background:#ca8a04;border-radius:4px"></div>
+          <span class="fw-semibold" style="font-size:.85rem">Intensitas Sedang</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:20px;height:20px;background:#16a34a;border-radius:4px"></div>
+          <span class="fw-semibold" style="font-size:.85rem">Intensitas Rendah</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title"><i class="bi bi-list me-2"></i>Data per Kecamatan</div>
+      <div style="max-height:420px;overflow-y:auto">
+        {% for d in map_data %}
+        {% set badge = 'badge-rendah' if d.intensitas=='Rendah' else ('badge-sedang' if d.intensitas=='Sedang' else 'badge-tinggi') %}
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:.8rem">
+          <span class="fw-semibold">{{ d.nama }}</span>
+          <span class="badge rounded-pill {{ badge }}">{{ d.intensitas }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const mapData = {{ map_data | tojson }};
+const colorByIntensitas = { 'Tinggi': '#dc2626', 'Sedang': '#ca8a04', 'Rendah': '#16a34a' };
+
+// Approximate bounding boxes (centroids) for each kecamatan in Semarang
+// Source: approximate geographic centers
+const kecamatanCoords = {
+  'Mijen':            { lat: -7.0643, lng: 110.3222 },
+  'Gunung Pati':      { lat: -7.0850, lng: 110.3803 },
+  'Banyumanik':       { lat: -7.0792, lng: 110.4170 },
+  'Gajah Mungkur':    { lat: -7.0180, lng: 110.3997 },
+  'Semarang Selatan': { lat: -7.0308, lng: 110.4197 },
+  'Candisari':        { lat: -7.0250, lng: 110.4083 },
+  'Tembalang':        { lat: -7.0561, lng: 110.4431 },
+  'Pedurungan':       { lat: -7.0153, lng: 110.4617 },
+  'Genuk':            { lat: -6.9897, lng: 110.4642 },
+  'Gayamsari':        { lat: -6.9981, lng: 110.4403 },
+  'Semarang Timur':   { lat: -6.9944, lng: 110.4233 },
+  'Semarang Utara':   { lat: -6.9639, lng: 110.4169 },
+  'Semarang Tengah':  { lat: -6.9939, lng: 110.4081 },
+  'Semarang Barat':   { lat: -6.9831, lng: 110.3886 },
+  'Tugu':             { lat: -6.9347, lng: 110.3467 },
+  'Ngaliyan':         { lat: -7.0000, lng: 110.3611 },
+};
+
+const map = L.map('map').setView([-7.005, 110.418], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Try to load GeoJSON, fallback to circle markers
+fetch('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/semarang-districts.geojson')
+  .then(r => r.ok ? r.json() : null)
+  .catch(() => null)
+  .then(geoData => {
+    if (geoData) {
+      L.geoJSON(geoData, {
+        style: feature => {
+          const name = feature.properties.name || feature.properties.NAME || '';
+          const entry = mapData.find(d => d.nama.toLowerCase() === name.toLowerCase() ||
+            name.toLowerCase().includes(d.nama.toLowerCase()));
+          return {
+            fillColor: entry ? colorByIntensitas[entry.intensitas] : '#94a3b8',
+            fillOpacity: 0.65, color: '#fff', weight: 2,
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const name = feature.properties.name || feature.properties.NAME || '';
+          const entry = mapData.find(d => d.nama.toLowerCase() === name.toLowerCase() ||
+            name.toLowerCase().includes(d.nama.toLowerCase()));
+          if (entry) {
+            layer.bindPopup(buildPopup(entry));
+          }
+        }
+      }).addTo(map);
+    } else {
+      renderFallback();
+    }
+  });
+
+function renderFallback() {
+  mapData.forEach(d => {
+    const coord = kecamatanCoords[d.nama];
+    if (!coord) return;
+    const color = colorByIntensitas[d.intensitas] || '#94a3b8';
+    L.circleMarker([coord.lat, coord.lng], {
+      radius: 22, fillColor: color, color: '#fff',
+      weight: 2, opacity: 1, fillOpacity: 0.8
+    })
+    .bindPopup(buildPopup(d))
+    .addTo(map);
+
+    L.tooltip({ permanent: true, direction: 'top', className: 'kec-label' })
+      .setContent(`<b>${d.nama}</b>`)
+      .setLatLng([coord.lat, coord.lng])
+      .addTo(map);
+  });
+}
+
+function buildPopup(d) {
+  const badgeColor = { 'Tinggi': '#dc2626', 'Sedang': '#ca8a04', 'Rendah': '#16a34a' }[d.intensitas];
+  return `
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:200px">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">${d.nama}</div>
+      <div style="margin-bottom:8px">
+        <span style="background:${badgeColor};color:#fff;padding:2px 10px;border-radius:20px;font-size:.78rem;font-weight:600">
+          Intensitas ${d.intensitas}
+        </span>
+      </div>
+      <table style="width:100%;font-size:.8rem;border-collapse:collapse">
+        <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:3px 0;color:#666">Pnyl. Hewan</td><td style="font-weight:600;text-align:right">${d.penyelamatan_hewan}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:3px 0;color:#666">Pnyl. Air</td><td style="font-weight:600;text-align:right">${d.penyelamatan_air}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:3px 0;color:#666">Ptlg. Medis</td><td style="font-weight:600;text-align:right">${d.pertolongan_medis}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0"><td style="padding:3px 0;color:#666">Keruntuhan</td><td style="font-weight:600;text-align:right">${d.keruntuhan}</td></tr>
+        <tr><td style="padding:3px 0;color:#666">Kec. Transport</td><td style="font-weight:600;text-align:right">${d.kecelakaan_transportasi}</td></tr>
+      </table>
+    </div>`;
+}
+
+// Add legend control
+const legend = L.control({ position: 'bottomright' });
+legend.onAdd = () => {
+  const div = L.DomUtil.create('div', '');
+  div.style.cssText = 'background:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-family:sans-serif;font-size:13px';
+  div.innerHTML = `<b style="display:block;margin-bottom:8px">Intensitas Cluster</b>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:16px;height:16px;background:#dc2626;border-radius:3px"></div> Tinggi</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:16px;height:16px;background:#ca8a04;border-radius:3px"></div> Sedang</div>
+    <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;background:#16a34a;border-radius:3px"></div> Rendah</div>`;
+  return div;
+};
+legend.addTo(map);
+
+// Fallback always (since GeoJSON from that repo may not have correct district boundaries)
+renderFallback();
+</script>
+<style>
+.kec-label { background: transparent; border: none; box-shadow: none; font-size: .72rem; font-weight: 700; color: #1e293b; }
+</style>
+{% endblock %}

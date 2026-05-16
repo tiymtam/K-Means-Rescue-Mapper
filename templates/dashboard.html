@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — K-Means Semarang{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-color:#3b82f6">
+      <div class="stat-icon" style="background:#eff6ff;color:#3b82f6"><i class="bi bi-map"></i></div>
+      <div>
+        <div class="stat-value">{{ total_kecamatan }}</div>
+        <div class="stat-label">Total Kecamatan</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-color:#8b5cf6">
+      <div class="stat-icon" style="background:#f5f3ff;color:#8b5cf6"><i class="bi bi-diagram-3"></i></div>
+      <div>
+        <div class="stat-value">{{ k_value }}</div>
+        <div class="stat-label">Jumlah Cluster (K)</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-color:#22c55e">
+      <div class="stat-icon" style="background:#f0fdf4;color:#22c55e"><i class="bi bi-graph-up"></i></div>
+      <div>
+        <div class="stat-value">{{ sil_score }}</div>
+        <div class="stat-label">Silhouette Score</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="border-color:#f59e0b">
+      <div class="stat-icon" style="background:#fffbeb;color:#f59e0b"><i class="bi bi-lightning-charge"></i></div>
+      <div>
+        <div class="stat-value">{{ total_kejadian }}</div>
+        <div class="stat-label">Total Kejadian</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="chart-card">
+      <h6><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Total Kejadian per Kecamatan</h6>
+      <canvas id="barChart" height="90"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="chart-card">
+      <h6><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Distribusi Cluster</h6>
+      <canvas id="pieChart" height="170"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Cluster Summary Table -->
+<div class="table-card">
+  <div class="table-card-header">
+    <h6><i class="bi bi-list-check me-2 text-success"></i>Ringkasan Cluster</h6>
+  </div>
+  <div class="p-3">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Cluster</th>
+          <th>Intensitas</th>
+          <th>Jumlah Kecamatan</th>
+          <th>Anggota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for label, info in cluster_summary.items()|sort %}
+        {% set badge = 'badge-rendah' if info.intensitas=='Rendah' else ('badge-sedang' if info.intensitas=='Sedang' else 'badge-tinggi') %}
+        <tr>
+          <td><span class="fw-bold">Cluster {{ label }}</span></td>
+          <td><span class="badge rounded-pill {{ badge }} px-3 py-2">{{ info.intensitas }}</span></td>
+          <td><span class="fw-bold text-primary">{{ info.count }}</span> kecamatan</td>
+          <td><small class="text-muted">{{ info.members | join(', ') }}</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bar Chart
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: 'Total Kejadian',
+      data: {{ chart_totals | tojson }},
+      backgroundColor: 'rgba(59,130,246,0.7)',
+      borderColor: '#3b82f6',
+      borderWidth: 1, borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+// Pie Chart
+const pieCols = ['#16a34a','#ca8a04','#dc2626'];
+new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: {{ pie_labels | tojson }},
+    datasets: [{
+      data: {{ pie_values | tojson }},
+      backgroundColor: pieCols.slice(0, {{ pie_labels|length }}),
+      borderWidth: 2, borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+    },
+    cutout: '60%',
+  }
+});
+</script>
+{% endblock %}

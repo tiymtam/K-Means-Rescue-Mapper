@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}Hasil Klasterisasi{% endblock %}
+{% block page_title %}Hasil Klasterisasi{% endblock %}
+
+{% block content %}
+<!-- Metric Row -->
+{% if cfg %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card" style="border-color:#8b5cf6">
+      <div class="stat-icon" style="background:#f5f3ff;color:#8b5cf6"><i class="bi bi-diagram-3"></i></div>
+      <div><div class="stat-value">K = {{ cfg.k_value }}</div><div class="stat-label">Nilai K Dipilih</div></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card" style="border-color:#22c55e">
+      <div class="stat-icon" style="background:#f0fdf4;color:#22c55e"><i class="bi bi-graph-up"></i></div>
+      <div><div class="stat-value">{{ "%.4f"|format(cfg.silhouette_score) }}</div><div class="stat-label">Silhouette Score</div></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card" style="border-color:#f59e0b">
+      <div class="stat-icon" style="background:#fffbeb;color:#f59e0b"><i class="bi bi-bar-chart-steps"></i></div>
+      <div><div class="stat-value">{{ "%.2f"|format(cfg.inertia) }}</div><div class="stat-label">Inertia (WCSS)</div></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <!-- PCA Scatter -->
+  <div class="col-lg-7">
+    <div class="chart-card">
+      <h6><i class="bi bi-scatter-chart me-2 text-primary"></i>Scatter Plot PCA 2D
+        {% if pca_variance %}<small class="text-muted fw-normal">(PC1: {{ pca_variance[0] }}%, PC2: {{ pca_variance[1] }}%)</small>{% endif %}
+      </h6>
+      <canvas id="scatterChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- Centroid Summary -->
+  <div class="col-lg-5">
+    <div class="chart-card h-100">
+      <h6><i class="bi bi-bullseye me-2 text-danger"></i>Centroid Akhir per Cluster (Skala Asli)</h6>
+      {% for c in centroid_summary %}
+      {% set badge = 'badge-rendah' if c.intensitas=='Rendah' else ('badge-sedang' if c.intensitas=='Sedang' else 'badge-tinggi') %}
+      <div class="mb-3 p-3 rounded" style="background:#f8fafc;border-left:4px solid {% if c.intensitas=='Rendah' %}#16a34a{% elif c.intensitas=='Sedang' %}#ca8a04{% else %}#dc2626{% endif %}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold">Cluster {{ c.cluster }}</span>
+          <span class="badge rounded-pill {{ badge }} px-2">{{ c.intensitas }}</span>
+        </div>
+        <div class="row g-1" style="font-size:.78rem">
+          {% for label, val in c.centroid_orig.items() %}
+          <div class="col-6"><span class="text-muted">{{ label[:15] }}:</span> <strong>{{ val }}</strong></div>
+          {% endfor %}
+        </div>
+        <div class="mt-1" style="font-size:.75rem;color:#64748b">
+          <i class="bi bi-people me-1"></i>{{ c.members | join(', ') }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Results Table -->
+<div class="table-card mb-4">
+  <div class="table-card-header">
+    <h6><i class="bi bi-list-check me-2"></i>Tabel Hasil Clustering</h6>
+  </div>
+  <div class="p-3">
+    <table class="table table-hover align-middle" id="tblHasil">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Kecamatan</th>
+          <th>Cluster</th>
+          <th>Intensitas</th>
+          <th>Pnyl. Hewan</th>
+          <th>Pnyl. Air</th>
+          <th>Ptlg. Medis</th>
+          <th>Keruntuhan</th>
+          <th>Kec. Transport</th>
+          <th>PCA X</th>
+          <th>PCA Y</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        {% set cr = r.ClusterResult %}
+        {% set kc = r.Kecamatan %}
+        {% set badge = 'badge-rendah' if cr.intensitas=='Rendah' else ('badge-sedang' if cr.intensitas=='Sedang' else 'badge-tinggi') %}
+        <tr>
+          <td class="text-muted">{{ loop.index }}</td>
+          <td class="fw-semibold">{{ kc.nama }}</td>
+          <td><span class="badge bg-secondary rounded-pill">{{ cr.cluster_label }}</span></td>
+          <td><span class="badge rounded-pill {{ badge }} px-3">{{ cr.intensitas }}</span></td>
+          <td>{{ kc.penyelamatan_hewan }}</td>
+          <td>{{ kc.penyelamatan_air }}</td>
+          <td>{{ kc.pertolongan_medis }}</td>
+          <td>{{ kc.keruntuhan }}</td>
+          <td>{{ kc.kecelakaan_transportasi }}</td>
+          <td class="text-muted" style="font-size:.8rem">{{ "%.3f"|format(cr.pca_x) }}</td>
+          <td class="text-muted" style="font-size:.8rem">{{ "%.3f"|format(cr.pca_y) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Mean per Cluster Table -->
+<div class="table-card">
+  <div class="table-card-header">
+    <h6><i class="bi bi-calculator me-2 text-success"></i>Rata-rata Fitur per Cluster</h6>
+  </div>
+  <div class="p-3 table-responsive">
+    <table class="table table-bordered table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Cluster</th>
+          <th>Intensitas</th>
+          {% for fl in fitur_labels %}<th>{{ fl }}</th>{% endfor %}
+          <th>Anggota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in centroid_summary %}
+        {% set badge = 'badge-rendah' if c.intensitas=='Rendah' else ('badge-sedang' if c.intensitas=='Sedang' else 'badge-tinggi') %}
+        <tr>
+          <td class="fw-bold">Cluster {{ c.cluster }}</td>
+          <td><span class="badge rounded-pill {{ badge }} px-2">{{ c.intensitas }}</span></td>
+          {% for fl in fitur_labels %}<td>{{ c.mean_orig[fl] }}</td>{% endfor %}
+          <td><small>{{ c.members | length }} kecamatan</small></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const scatterRaw = {{ scatter_data | tojson }};
+const colorMap = { 'Rendah': '#16a34a', 'Sedang': '#ca8a04', 'Tinggi': '#dc2626' };
+
+// Group by intensitas for datasets
+const groups = {};
+scatterRaw.forEach(d => {
+  if (!groups[d.intensitas]) groups[d.intensitas] = [];
+  groups[d.intensitas].push({ x: d.pca_x, y: d.pca_y, label: d.nama });
+});
+
+const datasets = Object.entries(groups).map(([intens, pts]) => ({
+  label: `Intensitas ${intens}`,
+  data: pts,
+  backgroundColor: colorMap[intens] + 'cc',
+  borderColor: colorMap[intens],
+  pointRadius: 9, pointHoverRadius: 12,
+  borderWidth: 2,
+}));
+
+const scatterChart = new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: { datasets },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const pt = ctx.raw;
+            return `${pt.label}: (${pt.x.toFixed(3)}, ${pt.y.toFixed(3)})`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Principal Component 1' } },
+      y: { title: { display: true, text: 'Principal Component 2' } },
+    }
+  }
+});
+
+$('#tblHasil').DataTable({ language: { search: 'Cari:', paginate: { previous: '‹', next: '›' } } });
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Data Kecamatan{% endblock %}
+{% block page_title %}Data Kecamatan{% endblock %}
+
+{% block content %}
+<div class="table-card">
+  <div class="table-card-header">
+    <h6><i class="bi bi-geo-alt me-2"></i>Tabel Data Kecamatan</h6>
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambah">
+        <i class="bi bi-plus-lg me-1"></i>Tambah Data
+      </button>
+      <form method="POST" action="/api/recalculate" id="recalcForm">
+        <button type="button" class="btn btn-warning btn-sm" onclick="recalculate()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Recalculate Clustering
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="p-3">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" id="tblKecamatan">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Kecamatan</th>
+            <th>Penyelamatan Hewan</th>
+            <th>Penyelamatan Air</th>
+            <th>Pertolongan Medis</th>
+            <th>Keruntuhan</th>
+            <th>Kec. Transportasi</th>
+            <th>Total</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for k in kecamatans %}
+          {% set total = k.penyelamatan_hewan + k.penyelamatan_air + k.pertolongan_medis + k.keruntuhan + k.kecelakaan_transportasi %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ k.nama }}</td>
+            <td>{{ k.penyelamatan_hewan }}</td>
+            <td>{{ k.penyelamatan_air }}</td>
+            <td>{{ k.pertolongan_medis }}</td>
+            <td>{{ k.keruntuhan }}</td>
+            <td>{{ k.kecelakaan_transportasi }}</td>
+            <td><span class="badge bg-primary rounded-pill">{{ total }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="editModal({{ k.id }}, '{{ k.nama }}', {{ k.penyelamatan_hewan }}, {{ k.penyelamatan_air }}, {{ k.pertolongan_medis }}, {{ k.keruntuhan }}, {{ k.kecelakaan_transportasi }})">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger ms-1"
+                onclick="hapusModal({{ k.id }}, '{{ k.nama }}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH -->
+<div class="modal fade" id="modalTambah" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Tambah Data Kecamatan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/kecamatan/tambah">
+        <div class="modal-body">
+          {% include '_form_fields.html' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT -->
+<div class="modal fade" id="modalEdit" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2 text-warning"></i>Edit Data Kecamatan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="formEdit" action="">
+        <div class="modal-body">
+          {% include '_form_fields.html' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning"><i class="bi bi-save me-1"></i>Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HAPUS -->
+<div class="modal fade" id="modalHapus" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>Hapus Data</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Apakah Anda yakin ingin menghapus data kecamatan <strong id="hapusNama"></strong>?
+        <div class="alert alert-warning mt-3 mb-0 py-2" style="font-size:.85rem">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Data hasil clustering kecamatan ini juga akan dihapus.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <form method="POST" id="formHapus" action="">
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Recalculate -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:2000">
+  <div id="toastRecalc" class="toast align-items-center text-white bg-success" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"><i class="bi bi-check-circle me-2"></i>Clustering berhasil dikalkulasi ulang!</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$('#tblKecamatan').DataTable({ language: { search: 'Cari:', lengthMenu: 'Tampilkan _MENU_ data', info: 'Menampilkan _START_ - _END_ dari _TOTAL_ data', paginate: { previous: '‹', next: '›' } } });
+
+function editModal(id, nama, h, a, m, k, t) {
+  document.getElementById('formEdit').action = `/kecamatan/edit/${id}`;
+  const f = document.getElementById('formEdit');
+  f.querySelector('[name=nama]').value = nama;
+  f.querySelector('[name=penyelamatan_hewan]').value = h;
+  f.querySelector('[name=penyelamatan_air]').value = a;
+  f.querySelector('[name=pertolongan_medis]').value = m;
+  f.querySelector('[name=keruntuhan]').value = k;
+  f.querySelector('[name=kecelakaan_transportasi]').value = t;
+  new bootstrap.Modal(document.getElementById('modalEdit')).show();
+}
+
+function hapusModal(id, nama) {
+  document.getElementById('hapusNama').textContent = nama;
+  document.getElementById('formHapus').action = `/kecamatan/hapus/${id}`;
+  new bootstrap.Modal(document.getElementById('modalHapus')).show();
+}
+
+function recalculate() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
+  fetch('/api/run-clustering', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ k: 3 })
+  }).then(r => r.json()).then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Recalculate Clustering';
+    if (data.success) {
+      new bootstrap.Toast(document.getElementById('toastRecalc')).show();
+    }
+  }).catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Recalculate Clustering';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Proses Clustering{% endblock %}
+{% block page_title %}Proses Clustering{% endblock %}
+
+{% block content %}
+<!-- Run Clustering Panel -->
+<div class="section-card mb-4">
+  <div class="section-title"><i class="bi bi-cpu me-2 text-primary"></i>Jalankan K-Means Clustering</div>
+  <div class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Nilai K (Jumlah Cluster)</label>
+      <select class="form-select" id="selectK">
+        {% for ki in range(2, 11) %}
+        <option value="{{ ki }}" {% if ki == (selected_cfg.k_value if selected_cfg else 3) %}selected{% endif %}>K = {{ ki }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary w-100" id="btnCluster" onclick="runClustering()">
+        <i class="bi bi-play-fill me-1"></i>Jalankan Clustering
+      </button>
+    </div>
+    <div class="col-md-6">
+      <div id="clusterStatus" class="alert alert-info py-2 mb-0" style="display:none"></div>
+      {% if selected_cfg %}
+      <div class="alert alert-success py-2 mb-0">
+        <i class="bi bi-check-circle me-1"></i>
+        K-Means terakhir dijalankan: <strong>K={{ selected_cfg.k_value }}</strong>,
+        Silhouette Score: <strong>{{ "%.4f"|format(selected_cfg.silhouette_score) }}</strong>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-7">
+    <div class="chart-card">
+      <h6><i class="bi bi-graph-down me-2 text-danger"></i>Elbow Method — Nilai WCSS per K</h6>
+      <canvas id="elbowChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="chart-card">
+      <h6><i class="bi bi-bar-chart me-2 text-success"></i>Silhouette Score per K</h6>
+      <canvas id="silChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Silhouette Table -->
+<div class="table-card mb-4">
+  <div class="table-card-header">
+    <h6><i class="bi bi-table me-2"></i>Perbandingan Silhouette Score</h6>
+  </div>
+  <div class="p-3">
+    <table class="table table-hover align-middle mb-0" id="tblSil">
+      <thead><tr><th>K</th><th>Silhouette Score</th><th>Inertia (WCSS)</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for s in sil_data %}
+        <tr class="{% if s.selected %}table-primary{% endif %}">
+          <td class="fw-bold">K = {{ s.k }}</td>
+          <td>{{ "%.4f"|format(s.silhouette) }}</td>
+          {% set inertia_val = namespace(v='-') %}
+          {% for e in elbow_data %}{% if e.k == s.k %}{% set inertia_val.v = e.inertia %}{% endif %}{% endfor %}
+          <td>{{ inertia_val.v }}</td>
+          <td>
+            {% if s.selected %}
+            <span class="badge bg-primary rounded-pill"><i class="bi bi-check-circle me-1"></i>Dipilih</span>
+            {% else %}-{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Centroid Iterations (from DB) -->
+<div class="table-card">
+  <div class="table-card-header">
+    <h6><i class="bi bi-arrow-repeat me-2 text-warning"></i>Rekam Iterasi Centroid (Skala Terstandarisasi)</h6>
+  </div>
+  <div class="p-3">
+    <div id="iterContainer">
+      <div class="text-muted text-center py-4">
+        <i class="bi bi-info-circle me-1"></i>Jalankan clustering untuk melihat rekam iterasi centroid.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const elbowData = {{ elbow_data | tojson }};
+const silData   = {{ sil_data  | tojson }};
+
+// Elbow Chart
+new Chart(document.getElementById('elbowChart'), {
+  type: 'line',
+  data: {
+    labels: elbowData.map(d => `K=${d.k}`),
+    datasets: [{
+      label: 'Inertia (WCSS)',
+      data: elbowData.map(d => d.inertia),
+      borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)',
+      borderWidth: 2.5, pointRadius: 6, pointBackgroundColor: '#fff',
+      pointBorderColor: '#3b82f6', pointBorderWidth: 2.5, tension: 0.3, fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: false } }
+  }
+});
+
+// Silhouette Chart
+new Chart(document.getElementById('silChart'), {
+  type: 'bar',
+  data: {
+    labels: silData.map(d => `K=${d.k}`),
+    datasets: [{
+      label: 'Silhouette Score',
+      data: silData.map(d => d.silhouette),
+      backgroundColor: silData.map(d => d.selected ? '#3b82f6' : 'rgba(34,197,94,0.6)'),
+      borderRadius: 6, borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, max: 1 } }
+  }
+});
+
+function runClustering() {
+  const k = parseInt(document.getElementById('selectK').value);
+  const btn = document.getElementById('btnCluster');
+  const status = document.getElementById('clusterStatus');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
+  status.style.display = 'block';
+  status.className = 'alert alert-info py-2 mb-0';
+  status.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Menjalankan K-Means dengan K=' + k + '...';
+
+  fetch('/api/run-clustering', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ k })
+  }).then(r => r.json()).then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Jalankan Clustering';
+    if (data.success) {
+      status.className = 'alert alert-success py-2 mb-0';
+      status.innerHTML = `<i class="bi bi-check-circle me-1"></i>Selesai! K=${k}, Silhouette Score: <strong>${data.result.silhouette_score}</strong>`;
+      renderIterTable(data.result.centroid_iterations, data.result.fitur_labels);
+    } else {
+      status.className = 'alert alert-danger py-2 mb-0';
+      status.innerHTML = '<i class="bi bi-x-circle me-1"></i>' + (data.error || 'Gagal');
+    }
+  }).catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Jalankan Clustering';
+    status.className = 'alert alert-danger py-2 mb-0';
+    status.innerHTML = '<i class="bi bi-x-circle me-1"></i>Terjadi error saat koneksi.';
+  });
+}
+
+function renderIterTable(iters, labels) {
+  const short = ['Hewan','Air','Medis','Keruntuhan','Transport'];
+  let html = '';
+  iters.forEach(iter => {
+    html += `<div class="mb-3"><div class="fw-bold text-primary mb-1">Iterasi ${iter.iterasi}</div>
+    <table class="table table-sm table-bordered mb-0"><thead><tr><th>Cluster</th>`;
+    short.forEach(l => html += `<th>${l}</th>`);
+    html += '</tr></thead><tbody>';
+    iter.clusters.forEach(c => {
+      html += `<tr><td class="fw-semibold">Cluster ${c.cluster}</td>`;
+      c.values.forEach(v => html += `<td>${v.toFixed(4)}</td>`);
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  document.getElementById('iterContainer').innerHTML = html;
+}
+</script>
+{% endblock %}
