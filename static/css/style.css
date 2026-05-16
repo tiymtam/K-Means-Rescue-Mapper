@@ -1,29 +1,32 @@
-/* ── Google Font ── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+/* ── Google Font (Space Grotesk khas Neubrutalism) ── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap');
 
 :root {
+  /* Layout Sizing */
   --sidebar-w: 240px;
-  --sidebar-bg: #0f172a;
-  --sidebar-text: #94a3b8;
-  --sidebar-active: #3b82f6;
   --topbar-h: 56px;
-  --brand-color: #38bdf8;
-  --accent: #3b82f6;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --card-bg: #fff;
-  --body-bg: #f1f5f9;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --radius: 12px;
-  --shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+
+  /* COPAL SOFT NEUBRUTALISM */
+  --bg-color: #F4F0E6;         
+  --text-main: #111111;        
+  --text-muted: #222222;       
+  --card-bg: #FFFFFF;          
+  --primary: #FF5A5F;          
+  --secondary: #8CE071;        
+  --accent: #FFD166;           
+
+  /* Border & Shadow (Versi Soft!) */
+  --border-color: #1A1A1A;     /* Hitamnya agak diturunin dikit biar gak terlalu pekat */
+  --border-width: 2px;         /* Ditipisin dari 3px jadi 2px */
+  --radius: 12px;              /* Sudut membulat 12px biar soft dan manis */
+  --shadow: 4px 4px 0px 0px #1A1A1A; /* Bayangan blok lebih kalem */
+  --shadow-hover: 2px 2px 0px 0px #1A1A1A;
 }
 
 * { box-sizing: border-box; }
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--body-bg);
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg-color);
   color: var(--text-main);
   margin: 0;
 }
@@ -33,7 +36,8 @@ body {
   position: fixed; top: 0; left: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--sidebar-bg);
+  background: var(--card-bg);
+  border-right: var(--border-width) solid var(--border-color);
   display: flex; flex-direction: column;
   z-index: 1000;
   transition: width .25s ease;
@@ -44,46 +48,63 @@ body {
 .sidebar-brand {
   display: flex; align-items: center; gap: 12px;
   padding: 20px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  background-color: var(--accent);
+  border-bottom: var(--border-width) solid var(--border-color);
 }
 .brand-icon {
   width: 36px; height: 36px; min-width: 36px;
-  background: var(--accent);
-  border-radius: 10px;
+  background: var(--primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 8px; /* Ikon dibikin agak membulat juga */
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 1.1rem;
+  box-shadow: 2px 2px 0px 0px var(--border-color);
 }
 .brand-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: .95rem; font-weight: 700; color: #fff;
+  font-size: 1.1rem; font-weight: 700; color: var(--text-main);
   white-space: nowrap;
 }
-.brand-sub { font-size: .72rem; color: var(--brand-color); white-space: nowrap; }
+.brand-sub { font-size: .75rem; color: var(--text-main); font-weight: 700; white-space: nowrap; }
 
 .sidebar-nav { flex: 1; padding: 16px 8px; overflow-y: auto; }
 .nav-section-label {
-  font-size: .62rem; font-weight: 700; letter-spacing: .1em;
-  color: #475569; padding: 8px 10px 4px;
+  font-size: .8rem; font-weight: 700; letter-spacing: .05em;
+  color: var(--text-main); padding: 8px 10px 4px;
   white-space: nowrap; overflow: hidden;
+  text-transform: uppercase;
 }
 .sidebar-nav .nav-link {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: 8px;
-  color: var(--sidebar-text);
-  font-size: .85rem; font-weight: 500;
+  padding: 10px 12px;
+  border: var(--border-width) solid transparent;
+  border-radius: 8px; /* Menu navigasi dibikin soft */
+  color: var(--text-main);
+  font-size: .9rem; font-weight: 700;
   text-decoration: none;
-  margin-bottom: 2px;
-  transition: background .15s, color .15s;
+  margin-bottom: 6px;
+  transition: all .15s;
   white-space: nowrap; overflow: hidden;
 }
-.sidebar-nav .nav-link i { font-size: 1rem; min-width: 20px; }
-.sidebar-nav .nav-link:hover { background: rgba(255,255,255,.07); color: #fff; }
-.sidebar-nav .nav-link.active { background: rgba(59,130,246,.18); color: #60a5fa; }
+.sidebar-nav .nav-link i { font-size: 1.1rem; min-width: 20px; }
+.sidebar-nav .nav-link:hover {
+  background: var(--secondary);
+  border-color: var(--border-color);
+  box-shadow: 3px 3px 0px 0px var(--border-color);
+  transform: translate(-2px, -2px);
+}
+.sidebar-nav .nav-link.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--border-color);
+  box-shadow: 3px 3px 0px 0px var(--border-color);
+}
 
 .sidebar-footer {
   padding: 14px 16px;
-  border-top: 1px solid rgba(255,255,255,.06);
+  border-top: var(--border-width) solid var(--border-color);
+  background-color: var(--accent);
   white-space: nowrap; overflow: hidden;
+  font-weight: 700;
 }
 
 /* ── MAIN WRAPPER ── */
@@ -97,115 +118,264 @@ body {
 /* ── TOPBAR ── */
 .topbar {
   height: var(--topbar-h);
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border-bottom: var(--border-width) solid var(--border-color);
   display: flex; align-items: center; gap: 12px;
   padding: 0 24px;
   position: sticky; top: 0; z-index: 900;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 .topbar-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1rem; font-weight: 700; color: var(--text-main);
+  font-size: 1.2rem; font-weight: 700; color: var(--text-main);
 }
 
 /* ── CONTENT ── */
 .content-area { padding: 24px; }
 
+/* ── CARDS (Sudutnya jadi soft) ── */
+.stat-card, .chart-card, .table-card, .section-card {
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  transition: transform .15s, box-shadow .15s;
+}
 /* ── CARDS ── */
 .stat-card {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px 24px;
-  display: flex; align-items: center; gap: 16px;
-  border-left: 4px solid var(--accent);
-  transition: transform .15s;
+  padding: 16px 20px; /* Padding dikurangin dikit biar isinya lebih lega */
+  display: flex; 
+  align-items: center; 
+  gap: 16px;
 }
-.stat-card:hover { transform: translateY(-2px); }
+
+/* INI KUNCI FIX-NYA BIAR TEKS GAK JEBOL KE KANAN */
+.stat-card > div:last-child {
+  min-width: 0; /* Wajib di flexbox biar teks panjang bisa di-wrap / dipotong */
+  flex: 1; /* Biar teksnya ngisi sisa ruang yang ada aja */
+}
 .stat-icon {
-  width: 48px; height: 48px; border-radius: 12px;
+  width: 48px; height: 48px;
+  min-width: 48px; 
+  flex-shrink: 0; /* Ikon tetap teguh, kotak sempurna 48x48 */
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 12px; 
+  background: var(--accent);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem;
+  box-shadow: 2px 2px 0px 0px var(--border-color);
+  color: var(--text-main);
 }
 .stat-value {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.8rem; font-weight: 700; line-height: 1;
+  font-size: 1.8rem; /* Agak dikecilin dari 2.2rem biar angka desimal muat */
+  font-weight: 700; 
+  line-height: 1; 
+  color: var(--text-main);
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis; /* Kalau angka masih kepanjangan, akan otomatis jadi ... */
 }
-.stat-label { font-size: .78rem; color: var(--text-muted); margin-top: 4px; }
-
+.stat-label { 
+  font-size: 0.75rem; /* Dikecilin dikit biar kata panjang muat */
+  font-weight: 700; 
+  color: var(--text-main); 
+  margin-top: 6px; 
+  text-transform: uppercase;
+  line-height: 1.2;
+  word-wrap: break-word; /* Biar teks otomatis turun ke baris baru kalau nabrak batas */
+  white-space: normal;
+}
 /* ── CHART CARD ── */
-.chart-card {
-  background: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
-}
+.chart-card { padding: 20px; }
 .chart-card h6 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700; font-size: .85rem;
-  color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: .05em; margin-bottom: 16px;
+  font-weight: 700; font-size: 1rem;
+  color: var(--text-main); text-transform: uppercase;
+  margin-bottom: 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  padding-bottom: 8px;
 }
 
 /* ── TABLE CARD ── */
 .table-card {
-  background: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: hidden; /* Biar sudut tabel ngikutin radius melengkung */
 }
 .table-card-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: var(--border-width) solid var(--border-color);
+  background-color: var(--accent);
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px;
 }
 .table-card-header h6 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700; font-size: .9rem; margin: 0;
+  font-weight: 700; font-size: 1rem; margin: 0; color: var(--text-main);
+}
+.table-card table { width: 100%; border-collapse: collapse; }
+.table-card table th, .table-card table td {
+  border-bottom: var(--border-width) solid var(--border-color);
+  border-right: var(--border-width) solid var(--border-color);
+  padding: 12px; font-weight: 500;
+}
+.table-card table th:last-child, .table-card table td:last-child {
+  border-right: none; /* Hilangin garis kanan mentok biar rapi */
+}
+.table-card table tr:last-child td {
+  border-bottom: none; /* Hilangin garis bawah mentok biar rapi */
 }
 .table-card table th {
-  font-size: .78rem; font-weight: 700;
-  color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: .04em; background: #f8fafc;
+  font-size: .9rem; font-weight: 700;
+  color: var(--text-main); text-transform: uppercase;
+  background: var(--secondary);
 }
 
 /* ── BADGE INTENSITAS ── */
-.badge-rendah  { background:#dcfce7; color:#166534; font-weight:600; }
-.badge-sedang  { background:#fef9c3; color:#854d0e; font-weight:600; }
-.badge-tinggi  { background:#fee2e2; color:#991b1b; font-weight:600; }
+.badge-rendah, .badge-sedang, .badge-tinggi {
+  padding: 6px 12px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 20px; /* Badge dibikin rounded banget ala pil */
+  font-weight: 700;
+  box-shadow: 2px 2px 0px 0px var(--border-color);
+  display: inline-block;
+}
+.badge-rendah  { background: var(--secondary); color: #111; }
+.badge-sedang  { background: var(--accent); color: #111; }
+.badge-tinggi  { background: var(--primary); color: #fff; }
 
 /* ── CLUSTER COLORS ── */
-.cluster-0-color { border-color: #16a34a !important; }
-.cluster-1-color { border-color: #ca8a04 !important; }
-.cluster-2-color { border-color: #dc2626 !important; }
+.cluster-0-color { border-color: var(--secondary) !important; }
+.cluster-1-color { border-color: var(--accent) !important; }
+.cluster-2-color { border-color: var(--primary) !important; }
 
 /* ── FORM SECTION ── */
-.section-card {
-  background: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px;
-  margin-bottom: 20px;
-}
+.section-card { padding: 24px; }
 .section-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: .95rem; font-weight: 700;
+  font-size: 1.1rem; font-weight: 700;
   margin-bottom: 16px; padding-bottom: 10px;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: var(--border-width) solid var(--border-color);
 }
 
+/* ── TOMBOL UMUM & AKSI ── */
+/* Pakai .btn aja biar nggak bentrok dengan tombol kecil di tabel */
+.btn {
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-weight: 700 !important;
+  border: var(--border-width) solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 3px 3px 0px 0px var(--border-color) !important;
+  transition: all 0.15s !important;
+}
+
+.btn:hover {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px 0px var(--border-color) !important;
+}
+
+/* Warna khusus Tombol Utama (Tambah Data, dll) */
+.btn-primary {
+  background-color: var(--primary) !important;
+  color: white !important;
+}
+
+/* Warna khusus Tombol Edit di tabel (Biru Soft) */
+.btn-outline-primary {
+  background-color: #E8F4FF !important; 
+  color: var(--text-main) !important;
+}
+.btn-outline-primary:hover {
+  background-color: #B6E0FE !important;
+}
+
+/* Warna khusus Tombol Hapus di tabel (Merah Soft) */
+.btn-outline-danger {
+  background-color: #FFE6E6 !important; 
+  color: var(--text-main) !important;
+}
+.btn-outline-danger:hover {
+  background-color: #FFA3A3 !important;
+}
+
+/* ── PERBAIKAN TOMBOL DI DALAM TABEL (Biar Rata & Gak Numpuk) ── */
+.table-card table td .btn-sm {
+  padding: 6px 10px !important; /* Dikecilin biar pas di dalam tabel */
+  box-shadow: 2px 2px 0px 0px var(--border-color) !important; /* Shadow dikecilin dikit */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px; /* Kasih jarak napas antar tombol */
+}
+
+.table-card table td .btn-sm:hover {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px 0px var(--border-color) !important;
+}
+
+/* Cegah tombol di kolom Aksi turun ke bawah atau desak-desakan */
+.table-card table td:last-child {
+  white-space: nowrap; 
+}
 /* ── MAP ── */
-#map { border-radius: var(--radius); }
+#map {
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
 
 /* DataTables overrides */
-.dataTables_wrapper .dataTables_filter input { border-radius: 8px; border: 1px solid #e2e8f0; padding: 6px 12px; }
-.dataTables_wrapper .dataTables_length select { border-radius: 8px; border: 1px solid #e2e8f0; }
-.page-item.active .page-link { background: var(--accent); border-color: var(--accent); }
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  border-radius: 8px;
+  border: var(--border-width) solid var(--border-color);
+  padding: 6px 12px;
+  background: var(--card-bg);
+  font-family: 'Space Grotesk', sans-serif;
+  box-shadow: 2px 2px 0px 0px var(--border-color);
+}
+.page-item.active .page-link {
+  background: var(--primary);
+  border-color: var(--border-color);
+  color: #fff;
+  border-radius: 6px;
+}
 
 /* Responsive */
 @media(max-width:768px) {
   .sidebar { width: 64px; }
   .main-wrapper { margin-left: 64px; }
+}
+
+/* ── Solusi Teks Numpuk pas Sidebar Ditutup ── */
+.sidebar.collapsed .nav-section-label {
+  padding: 12px 0;
+  text-align: center;
+  font-size: 0; /* Menghilangkan teks tulisan MENU UTAMA */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mengubah label seksi menjadi garis dekoratif horizontal yang soft saat ditutup */
+.sidebar.collapsed .nav-section-label::before {
+  content: "";
+  width: 24px;
+  height: var(--border-width);
+  background-color: var(--border-color);
+  display: block;
+}
+
+/* Sembunyikan total teks brand dan footer pas ditutup biar gak berantakan */
+.sidebar.collapsed .brand-title,
+.sidebar.collapsed .brand-sub,
+.sidebar.collapsed .sidebar-footer span,
+.sidebar.collapsed .sidebar-footer small {
+  display: none !important;
+}
+
+/* Pastikan posisi ikon di footer tetap pas di tengah */
+.sidebar.collapsed .sidebar-footer {
+  text-align: center;
+  padding: 14px 0;
+}
+
+/* ── PERBAIKAN TOMBOL ZOOM PETA BIAR GAK NUMPUK ── */
+.leaflet-top, 
+.leaflet-bottom {
+  z-index: 800 !important;
 }

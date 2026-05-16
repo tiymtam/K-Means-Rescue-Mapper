@@ -8,6 +8,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kmeans_semarang.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'semarang-kmeans-2025'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 db.init_app(app)
 
